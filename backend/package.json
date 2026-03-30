@@ -1,0 +1,15 @@
+{
+  "name": "taskmaster-backend",
+  "version": "1.0.0",
+  "description": "TaskMaster API - Midnight Command Center Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "lowdb": "^7.0.1"
+  }
+}

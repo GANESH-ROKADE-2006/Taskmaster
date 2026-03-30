@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskMaster - Midnight Command Center</title>
+<meta name="description" content="A production-grade To-Do and Task Reminder app with REST API backend, reminders, filters, and drag-and-drop.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- API Status Badge -->
+<div id="api-status" class="offline">
+  <div class="status-dot"></div>
+  <span id="api-status-text">API Offline</span>
+</div>
+
+<div id="app">
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <aside id="sidebar" aria-label="Navigation">
+    <div class="sidebar-logo">
+      <h1>TaskMaster</h1>
+      <span class="sidebar-time" id="sidebar-clock"></span>
+    </div>
+    <div class="sidebar-section">Views</div>
+    <nav id="nav-list" aria-label="Task filters">
+      <div class="nav-item active" data-filter="all" tabindex="0" role="button" aria-label="All Tasks"><span class="nav-icon">📋</span>All Tasks<span class="nav-count" id="cnt-all">0</span></div>
+      <div class="nav-item" data-filter="today" tabindex="0" role="button" aria-label="Today"><span class="nav-icon">☀️</span>Today<span class="nav-count" id="cnt-today">0</span></div>
+      <div class="nav-item" data-filter="due-soon" tabindex="0" role="button" aria-label="Due Soon"><span class="nav-icon">⚡</span>Due Soon<span class="nav-count" id="cnt-due-soon">0</span></div>
+      <div class="nav-item" data-filter="overdue" tabindex="0" role="button" aria-label="Overdue"><span class="nav-icon">🔴</span>Overdue<span class="nav-count" id="cnt-overdue">0</span></div>
+      <div class="nav-item" data-filter="completed" tabindex="0" role="button" aria-label="Completed"><span class="nav-icon">✓</span>Completed<span class="nav-count" id="cnt-completed">0</span></div>
+    </nav>
+    <div class="sidebar-section">Priority</div>
+    <nav aria-label="Priority filters">
+      <div class="nav-item" data-filter="priority-high" tabindex="0" role="button"><span class="nav-icon" style="color:var(--red)">🔥</span>High<span class="nav-count" id="cnt-high">0</span></div>
+      <div class="nav-item" data-filter="priority-medium" tabindex="0" role="button"><span class="nav-icon" style="color:var(--accent)">📌</span>Medium<span class="nav-count" id="cnt-medium">0</span></div>
+      <div class="nav-item" data-filter="priority-low" tabindex="0" role="button"><span class="nav-icon" style="color:var(--teal)">🌿</span>Low<span class="nav-count" id="cnt-low">0</span></div>
+    </nav>
+    <div class="sidebar-section">Categories</div>
+    <div class="cat-list" id="cat-list"></div>
+    <div style="padding:8px 12px">
+      <div class="add-cat-btn" id="add-cat-btn" tabindex="0" role="button" aria-label="Add category">+ New category</div>
+    </div>
+  </aside>
+  <main id="main">
+    <div id="topbar">
+      <button id="menu-toggle" aria-label="Toggle sidebar">☰</button>
+      <div id="quick-add" tabindex="0" role="button" aria-label="Quick add task (press /)">
+        <span class="qa-icon">✦</span>
+        <span class="qa-text">Add a task… or press <kbd style="font-family:var(--font-mono);background:var(--bg4);padding:1px 5px;border-radius:3px;font-size:10px">/</kbd> anywhere</span>
+        <span class="qa-hint">Quick Add</span>
+      </div>
+    </div>
+    <div id="task-area" role="main">
+      <div class="view-header">
+        <div class="view-title" id="view-title">All Tasks</div>
+        <div class="view-meta" id="view-meta"></div>
+      </div>
+      <div id="due-soon-section" class="due-soon-section" style="display:none">
+        <div class="section-label">⚡ Due Soon (next 2h)</div>
+        <div class="task-list" id="due-soon-list"></div>
+      </div>
+      <div class="section-label" id="main-section-label" style="display:none">All Tasks</div>
+      <div class="task-list" id="task-list"></div>
+    </div>
+  </main>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-overlay" id="task-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-text">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title-text">New Task</div>
+      <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Quick Parse</label>
+        <input class="nlp-input" id="nlp-input" type="text" placeholder='e.g. "Submit report tomorrow 3pm high"' aria-label="Natural language task input">
+        <div class="nlp-hint">Supports: tomorrow, next week, mon–sun, 3pm, high/medium/low</div>
+      </div>
+      <div class="form-group">
+        <label for="task-title-input">Title *</label>
+        <input id="task-title-input" type="text" placeholder="What needs to be done?" aria-required="true">
+      </div>
+      <div class="form-group">
+        <label for="task-desc-input">Description</label>
+        <textarea id="task-desc-input" placeholder="Additional notes…" aria-label="Task description"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="task-date-input">Due Date</label>
+          <input id="task-date-input" type="date" aria-label="Due date">
+        </div>
+        <div class="form-group">
+          <label for="task-time-input">Due Time</label>
+          <input id="task-time-input" type="time" aria-label="Due time">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="task-priority-input">Priority</label>
+          <select id="task-priority-input" aria-label="Priority">
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="task-cat-input">Category</label>
+          <select id="task-cat-input" aria-label="Category"><option value="">No Category</option></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" id="modal-cancel">Cancel</button>
+        <button class="btn-primary" id="modal-save">Save Task</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal-overlay" id="cat-modal" role="dialog" aria-modal="true" aria-labelledby="cat-modal-title">
+  <div class="modal" style="width:340px">
+    <div class="modal-head">
+      <div class="modal-title" id="cat-modal-title">New Category</div>
+      <button class="modal-close" id="cat-modal-close" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="cat-name-input">Category Name</label>
+        <input id="cat-name-input" type="text" placeholder="e.g. Work, Health, Finance">
+      </div>
+      <div class="form-group">
+        <label>Color</label>
+        <div class="color-swatches" id="color-swatches"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" id="cat-cancel">Cancel</button>
+        <button class="btn-primary" id="cat-save">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container" aria-live="polite"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "taskmaster",
+  "version": "1.0.0",
+  "description": "TaskMaster - Midnight Command Center (Full-Stack)",
+  "scripts": {
+    "start:backend": "cd backend && node server.js",
+    "dev:backend": "cd backend && node --watch server.js",
+    "install:backend": "cd backend && npm install",
+    "setup": "cd backend && npm install"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
